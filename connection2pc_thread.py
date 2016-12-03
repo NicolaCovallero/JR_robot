@@ -17,18 +17,16 @@ class ConnectionToPc(threading.Thread):
         self.jr = jr
 
     def run(self):
-        tmp_data = "no_connected"
-        tmp_addr = ""
+
         while 1:
             success, d = self.jr.connection_socket.receiveData()
-            if success:
+            if success and d[0] == "connected":
+
                 data = d[0]
                 addr = d[1]
                 print 'Message[' + addr[0] + ':' + str(addr[1]) + '] - ' + data.strip()
-                self.jr.connection_socket.sentData(data, ADDR=addr)  # send the data back
-                if tmp_data == data and tmp_addr == addr:
-                    self.jr.connected = True
-                    self.jr.IP = addr[0]
-                    print "Connected to device with IP address: ", self.jr.IP
-                tmp_data = data
-                tmp_addr = addr
+                # To confirm the establishment of the connection some data are sent to the pc:
+                data_str = "jr_data/" + "yaw_range/" + str(self.jr.yaw_range_degree) + "/" + "pitch/" + str(self.jr.pitch_range_degree)
+                self.jr.connection_socket.sentData(data_str, ADDR=addr)  # send the data back
+                self.jr.IP = addr[0]
+                print "Connected to device with IP address: ", self.jr.IP
