@@ -9,6 +9,7 @@ __autor__ = "Nicola Covallero"
 
 
 import udpsocket # Sockets
+import bluetooth
 import wiringpi # PWM
 import RPi.GPIO as GPIO # GPIO
 import time
@@ -22,14 +23,24 @@ import motorscontroller_thread
 
 
 class JonnyRobot:
-    def __init__(self):
+    def __init__(self, communication_style = "WIFI"):
         # parameters
+        self.communication_style = communication_style
         self.HOST = ''
         self.CONNECTION_PORT = 2525
+
+
         self.DRIVING_PORT = 2526
+        self.DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+
         self.SONAR_PORT = 2527
+
         self.CAMERA_PORT = 2528
+
         self.CAMERA_DRIVING_PORT = 2529
+        self.CAMERA_DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ea"
+
+
         # MOTORS' PINS ----> still to be set correctly
         # Nomenclature: _F : forward     _B : backward
         self.MOTOR_LEFT_F = 7
@@ -59,14 +70,27 @@ class JonnyRobot:
         self.velocity_right_weel = 0
 
         # The "connection socket" is the one with the only aim to establish a connection to the computer
-        self.connection_socket = udpsocket.UDPSocket()
-        # We make all the sockets as servers here for the robot. Once they have binded they can be used for normal communication
-        self.connection_socket.bind(self.CONNECTION_PORT, self.HOST)
+        if self.communication_style == "WIFI":
+            self.connection_socket = udpsocket.UDPSocket()
+            # We make all the sockets as servers here for the robot. Once they have binded they can be used for normal communication
+            self.connection_socket.bind(self.CONNECTION_PORT, self.HOST)
+        else:
+            self.connection_socket = bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+            # bind the socket to an address, this format bounds the socket to any port and any address. You can bound the socket to a specific address and a specific port.
+            self.connection_socket.bind(("", bluetooth.PORT_ANY))
+            # Listen to connections made to the socket. The argument specified the maximum number of queded connections. It has to be at least 0 but in that case it does not listen anyone.
+            self.connection_socket.listen(1)
 
         # The "driving socket" has the aim to receive data regarding the driving of the robot (direction and velocity)
-        self.driving_socket = udpsocket.UDPSocket()
-        self.driving_socket.bind(self.DRIVING_PORT, self.HOST)
-
+        if self.communication_style == "WIFI":
+            self.driving_socket = udpsocket.UDPSocket()
+            self.driving_socket.bind(self.DRIVING_PORT, self.HOST)
+        else:
+            self.driving_socket = bluetooth.BluetoothSocket( bluetooth.RFCOMM )
+            # bind the socket to an address, this format bounds the socket to any port and any address. You can bound the socket to a specific address and a specific port.
+            self.driving_socket.bind(("", bluetooth.PORT_ANY))
+            # Listen to connections made to the socket. The argument specified the maximum number of queded connections. It has to be at least 0 but in that case it does not listen anyone.
+            self.driving_socket.listen(1)
 
         self.camera_driving_socket = udpsocket.UDPSocket()
         self.camera_driving_socket.bind(self.CAMERA_DRIVING_PORT, self.HOST)
@@ -122,7 +146,7 @@ class JonnyRobot:
         # we use the term pulse because it refers to the pwm with (50=0.5ms,250=2.5ms)
         # we are going to set the zero value of the servo with the central pulse
         # ideally 50 is -90 degree and 250 is + 90 degree (- is on the rigth for the yaw, and down for the pitch)
-        self.yaw_angle_zero_pulse = 138
+        self.yaw_angle_zero_pulse = 140
         self.pitch_angle_zero_pulse = 145
         # iF the zero values are not perfectly calibrated to 150 we are going to center with saturation values
         self.yaw_range_pulse = min( self.yaw_angle_zero_pulse - 50, 250 - self.yaw_angle_zero_pulse)
@@ -233,15 +257,41 @@ def mapGPIO2WIRINGPI(pin):
 if __name__ == "__main__":
 
     try:
-        jr = JonnyRobot()
-        jr.run()
-        print "done"
+        if len(sys.argv) < 2:
+            jr = JonnyRobot()
+            jr.run()
+            print "done - communication style: WIFI"
+        else:
+            if sys.argv[1] == "-b":
+                communication_style = "BLUETOOTH"
+            elif sys.argv[1] == "-w":
+                communication_style = "WIFI"
+            else:
+                communication_style = ""
+            if communication_style == "WIFI" or communication_style == "BLUETOOTH":
+                jr = JonnyRobot(communication_style)
+                jr.run()
+                print "done - communication style: ", communication_style
+            else:
+                jr = JonnyRobot()
+                jr.run()
+                print "done - uncorrect communication style given as input, the robot will communicate via WIFI "
+                print "To tune the program: $ sudo python main.py -w/-b"
+
 
         while 1: pass # this is necessary in order to make the Keyboard interrupt detectable
 
     except KeyboardInterrupt:
         print '\nCTRL-C pressed ... exiting...'
         exitFlag = True
+
+        # bring camera servo motors to the home pose
+        jr.yaw_motor_pwm.ChangeDutyCycle(jr.yawDegreeToDutyCycle(0.0))
+        jr.pitch_motor_pwm.ChangeDutyCycle(jr.pitchDegreeToDutyCycle(0.0))
+        time.sleep(0.3)
+        jr.yaw_motor_pwm.stop()
+        jr.pitch_motor_pwm.stop()
+
         while not jr.cleanMotorsPins():
             pass
         GPIO.cleanup()

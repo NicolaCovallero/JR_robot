@@ -44,16 +44,16 @@ class CameraDrivingCommand(threading.Thread):
                 # COMMAND/ANGLE (e.g.: pitch/57.3)
                 data = d[0].split('/')
                 #print "command: ", data
-                if not data.__len__() == 2:
+                if not data.__len__() == 4:
                     print "Error receiving the DRIVING command. Not correct number of arguments in the string"
                 else:
                     self.jr.yaw_angle_old = self.jr.yaw_angle
                     self.jr.pitch_angle_old = self.jr.pitch_angle
-                    if data[0] == 'pitch':
-                        pitch_angle = float(data[1])
+                    if data[2] == 'pitch':
+                        pitch_angle = float(data[3])
                         self.jr.new_pitch_angle = True
                         self.jr.new_pitch_angle_arrived = time.time()
-                    elif data[0] == 'yaw':
+                    if data[0] == 'yaw':
                         self.jr.new_yaw_angle = True
                         self.jr.new_yaw_angle_arrived = time.time()
                         yaw_angle = float(data[1])
