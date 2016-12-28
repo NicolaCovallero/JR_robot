@@ -62,6 +62,8 @@ class DrivingCommand(threading.Thread):
                         print "wrong command sent to DRIVING service"
                 except IOError, e:
                     self.updateCommands(False, None)
+                    # TODO
+                    # handle exceptions accordingly ot timeout or connection reset by peer
                     # if e[0] == 11 or e == "timed out":
                     #     self.updateCommands(False, d)
                     # else:

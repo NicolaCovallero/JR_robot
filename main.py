@@ -92,8 +92,17 @@ class JonnyRobot:
             # Listen to connections made to the socket. The argument specified the maximum number of queded connections. It has to be at least 0 but in that case it does not listen anyone.
             self.driving_socket.listen(1)
 
-        self.camera_driving_socket = udpsocket.UDPSocket()
-        self.camera_driving_socket.bind(self.CAMERA_DRIVING_PORT, self.HOST)
+        # The "driving socket" has the aim to receive data regarding the driving of the robot (direction and velocity)
+        if self.communication_style == "WIFI":
+            self.camera_driving_socket = udpsocket.UDPSocket()
+            self.camera_driving_socket.bind(self.CAMERA_DRIVING_PORT, self.HOST)
+        else:
+            self.camera_driving_socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+            # bind the socket to an address, this format bounds the socket to any port and any address. You can bound the socket to a specific address and a specific port.
+            self.camera_driving_socket.bind(("", bluetooth.PORT_ANY))
+            # Listen to connections made to the socket. The argument specified the maximum number of queded connections. It has to be at least 0 but in that case it does not listen anyone.
+            self.camera_driving_socket.listen(1)
+
 
 
 
