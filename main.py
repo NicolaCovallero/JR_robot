@@ -248,6 +248,20 @@ class JonnyRobot:
         wiringpi.softPwmWrite(self.MOTOR_LEFT_B, 0)
         return True
 
+    def printData(self):
+        """
+        Print in the terminal all the relevant data
+        :return: None
+        """
+        if self.communication_style == "BLUETOOTH":
+            print "UUID bluetooth camera motors: ", self.CAMERA_DRIVING_SERVICE_UUID
+            print "UUID bluetooth wheels motor: ", self.DRIVING_SERVICE_UUID
+        elif self.communication_style == "WIFI":
+            print "UDP connection port: " , self.CONNECTION_PORT
+            print "UDP driving port: ", self.DRIVING_PORT
+            print "UDP camera image port: ", self.CAMERA_PORT
+            print "UDP camera motors port: ", self.CAMERA_DRIVING_PORT
+
 
 def mapGPIO2WIRINGPI(pin):
     # revision 1:
@@ -269,7 +283,7 @@ if __name__ == "__main__":
         if len(sys.argv) < 2:
             jr = JonnyRobot()
             jr.run()
-            print "done - communication style: WIFI"
+            print "Communication style: WIFI"
         else:
             if sys.argv[1] == "-b":
                 communication_style = "BLUETOOTH"
@@ -280,13 +294,14 @@ if __name__ == "__main__":
             if communication_style == "WIFI" or communication_style == "BLUETOOTH":
                 jr = JonnyRobot(communication_style)
                 jr.run()
-                print "done - communication style: ", communication_style
+                print "Communication style: ", communication_style
             else:
                 jr = JonnyRobot()
                 jr.run()
-                print "done - uncorrect communication style given as input, the robot will communicate via WIFI "
+                print "Uncorrect communication style given as input, the robot will communicate via WIFI "
                 print "To tune the program: $ sudo python main.py -w/-b"
 
+        jr.printData()
 
         while 1: pass # this is necessary in order to make the Keyboard interrupt detectable
 

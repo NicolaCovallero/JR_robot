@@ -40,7 +40,10 @@ class CameraDrivingCommand(threading.Thread):
             while 1:
 
                 success, d = self.jr.camera_driving_socket.receiveData()
-                self.updateValues(success,d[0].split('/'))
+                if success:
+                    self.updateValues(success,d[0].split('/'))
+                else:
+                    self.updateValues(success, None)
 
         else:
 
