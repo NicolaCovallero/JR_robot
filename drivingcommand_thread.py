@@ -37,14 +37,15 @@ class DrivingCommand(threading.Thread):
 
 
         else:
-
+            [ addr ,port] = self.jr.driving_socket.getsockname()
+            print "Advertising DRIVING service on address" + str(addr) + " and port: " + str(port)
             bluetooth.advertise_service(self.jr.driving_socket, "jr_driving_service",
                               service_id=self.jr.DRIVING_SERVICE_UUID,
                               service_classes=[self.jr.DRIVING_SERVICE_UUID, bluetooth.SERIAL_PORT_CLASS],
                               profiles=[bluetooth.SERIAL_PORT_PROFILE],
                               #                   protocols = [ OBEX_UUID ]
                               )
-
+            print "DRIVING service advertised"
             try:
                 self.jr.driving_socket_client_sock, self.jr.driving_socket_client_sock_info = self.jr.driving_socket.accept()
                 print "Connection established for DRIVING service, acceptd from", self.jr.driving_socket_client_sock_info
@@ -53,6 +54,7 @@ class DrivingCommand(threading.Thread):
 
             timeout = 0.05
             self.jr.driving_socket_client_sock.settimeout(timeout)
+            # not set the timeout to the client!
             while True:
                 try:
                     d = self.jr.driving_socket_client_sock.recv(1024)
@@ -61,15 +63,24 @@ class DrivingCommand(threading.Thread):
                     else:
                         print "wrong command sent to DRIVING service"
                 except IOError, e:
-                    self.updateCommands(False, None)
-                    # TODO
-                    # handle exceptions accordingly ot timeout or connection reset by peer
-                    # if e[0] == 11 or e == "timed out":
-                    #     self.updateCommands(False, d)
-                    # else:
-                    #     print "connection lost with: ", self.jr.driving_socket_client_sock_info
-                    #     print "Error number:", e.errno
-                    #     print "Error:", e
+
+                    if str(e) == "timed out":
+                        self.updateCommands(False, None)
+                    else:
+
+                        print "DRIVING connection lost with: ", self.jr.driving_socket_client_sock_info
+                        print "Error number:", e.errno
+                        print "Error:", e
+
+                        connected = False
+                        while not connected:
+                            try:
+                                self.jr.driving_socket_client_sock, self.jr.driving_socket_client_sock_info = self.jr.driving_socket.accept()
+                                self.jr.driving_socket_client_sock.settimeout(timeout)
+                                print "Connection established for DRIVING service, acceptd from", self.jr.driving_socket_client_sock_info
+                                connected = True
+                            except IOError:
+                                print "IOError in driving accepting connection"
 
     def updateCommands(self,success,d):
         if success:

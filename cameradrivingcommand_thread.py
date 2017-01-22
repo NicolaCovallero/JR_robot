@@ -55,12 +55,12 @@ class CameraDrivingCommand(threading.Thread):
                                         )
 
             try:
+                [addr, port] = self.jr.camera_driving_socket.getsockname()
+                print "Advertising CAMERA DRIVING service on address" + str(addr) + " and port: " + str(port)
                 self.jr.camera_driving_socket_client_sock, self.jr.camera_driving_socket_client_sock_info = self.jr.camera_driving_socket.accept()
-                print
-                "Connection established for CAMERA DRIVING service, acceptd from", self.jr.camera_driving_socket_client_sock_info
+                print "Connection established for CAMERA DRIVING service, acceptd from", self.jr.camera_driving_socket_client_sock_info
             except IOError:
-                print
-                "IOError in driving accepting connection"
+                print "IOError in driving accepting connection"
 
             timeout = 0.05
             self.jr.camera_driving_socket_client_sock.settimeout(timeout)
@@ -70,10 +70,25 @@ class CameraDrivingCommand(threading.Thread):
                     if len(d) > 0:
                         self.updateValues(True, d.split('/'))
                     else:
-                        print
-                        "wrong command sent to DRIVING service"
+                        print "wrong command sent to DRIVING service"
                 except IOError, e:
-                    self.updateValues(False, None)
+                    if str(e) == "timed out":
+                        self.updateValues(False, None)
+                    else:
+
+                        print "CAMERA DRIVING connection lost with: ", self.jr.driving_socket_client_sock_info
+                        print "Error number:", e.errno
+                        print "Error:", e
+
+                        connected = False
+                        while not connected:
+                            try:
+                                self.jr.camera_driving_socket_client_sock, self.jr.camera_driving_socket_client_info = self.jr.camera_driving_socket.accept()
+                                self.jr.camera_driving_socket_client_sock.settimeout(timeout)
+                                print "Connection established for DRIVING service, acceptd from", self.jr.camera_driving_socket_client_info
+                                connected = True
+                            except IOError:
+                                print "IOError in driving accepting connection"
 
 
     def updateValues(self,success,data):

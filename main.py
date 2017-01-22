@@ -14,7 +14,6 @@ import wiringpi # PWM
 import RPi.GPIO as GPIO # GPIO
 import time
 import sys
-import threading
 
 import connection2pc_thread
 import drivingcommand_thread
@@ -31,14 +30,14 @@ class JonnyRobot:
 
 
         self.DRIVING_PORT = 2526
-        self.DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ee"
+        self.DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ed"
 
         self.SONAR_PORT = 2527
 
         self.CAMERA_PORT = 2528
 
         self.CAMERA_DRIVING_PORT = 2529
-        self.CAMERA_DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ea"
+        self.CAMERA_DRIVING_SERVICE_UUID = "94f39d29-7d6d-437d-973b-fba39e49d4ec"
 
 
         # MOTORS' PINS ----> still to be set correctly
