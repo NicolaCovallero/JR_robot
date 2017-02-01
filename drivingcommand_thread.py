@@ -2,6 +2,7 @@ import threading
 import math
 import sys
 import bluetooth
+import time
 
 class DrivingCommand(threading.Thread):
 
@@ -84,6 +85,7 @@ class DrivingCommand(threading.Thread):
 
     def updateCommands(self,success,d):
         if success:
+            # print str(time.time())+"received:",d
             # parsing the input
             # The command should be defined by a string as:
             # COMMAND-VELOCITY

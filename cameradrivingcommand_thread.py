@@ -67,6 +67,7 @@ class CameraDrivingCommand(threading.Thread):
             while True:
                 try:
                     d = self.jr.camera_driving_socket_client_sock.recv(1024)
+                    self.jr.camera_driving_socket_client_sock.send("received")
                     if len(d) > 0:
                         self.updateValues(True, d.split('/'))
                     else:
@@ -95,6 +96,7 @@ class CameraDrivingCommand(threading.Thread):
         yaw_angle = self.jr.yaw_angle
         pitch_angle = self.jr.pitch_angle
         if success:
+            #print str(time.time())+" received: ",data
             # parsing the input
             # The command should be defined by a string as:
             # COMMAND/ANGLE (e.g.: pitch/57.3)
